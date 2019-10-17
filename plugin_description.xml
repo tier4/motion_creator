@@ -1,0 +1,8 @@
+<library path="lib/libmotion_creator">
+  <class name="rviz_plugins/MotionCreator" type="rviz_plugins::MotionCreator" base_class_type="rviz::Panel">
+    <description>A panel widget to make motion</description>
+  </class>
+
+</library>
+
+
