@@ -9,7 +9,9 @@
 /rviz/event_capture/mouse (event_capture/MouseEventCaptureStamped)
 
 ### Publish Topic
-- /motion_creator/marker (visualization_msgs/MarkerArray)：障害物の通る経路
+- /motion_creator/marker (visualization_msgs/MarkerArray)：作成したwaypoint
+
+## Scripts
 
 ### yaml2csv.py
 - yamlファイルからautowareのcsvの形式に変更
