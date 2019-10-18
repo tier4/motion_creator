@@ -86,7 +86,7 @@ void MotionCreator::edit(bool checked)
 
 void MotionCreator::load()
 {
-  QString filepath = QFileDialog::getOpenFileName(this, "Load Fake Obstacle Settings", QDir::homePath(), tr("YAML (*.yaml)"));
+  QString filepath = QFileDialog::getOpenFileName(this, "Load", QDir::homePath(), tr("YAML (*.yaml)"));
 
   if (filepath.isEmpty())
     return;
@@ -149,7 +149,7 @@ void MotionCreator::load()
 
 void MotionCreator::reset()
 {
-  auto result = QMessageBox::question(this, "Reset", "Reset obstacle information?", QMessageBox::Yes | QMessageBox::No);
+  auto result = QMessageBox::question(this, "Reset", "Reset ?", QMessageBox::Yes | QMessageBox::No);
   if (result == QMessageBox::Yes)
   {
     target_frame_->setText("");
@@ -163,7 +163,7 @@ void MotionCreator::reset()
 
 void MotionCreator::save()
 {
-  QString filepath = QFileDialog::getSaveFileName(this, "Save Fake Obstacle Settings", save_dir_, tr("YAML (*.yaml)"));
+  QString filepath = QFileDialog::getSaveFileName(this, "Save", save_dir_, tr("YAML (*.yaml)"));
 
   if (filepath.isEmpty())
     return;
@@ -190,38 +190,32 @@ void MotionCreator::save()
   emitter << YAML::Value << velocity_->text().toUtf8().constData();
   emitter << YAML::Comment("(km/h)");
 
+  auto wps2yaml = [&emitter](const geometry_msgs::Pose &pose){
+    emitter << YAML::BeginMap;
+    emitter << YAML::Key << "px" << YAML::Value << pose.position.x;
+    emitter << YAML::Key << "py" << YAML::Value << pose.position.y;
+    emitter << YAML::Key << "pz" << YAML::Value << pose.position.z;
+    emitter << YAML::Key << "ox" << YAML::Value << pose.orientation.x;
+    emitter << YAML::Key << "oy" << YAML::Value << pose.orientation.y;
+    emitter << YAML::Key << "oz" << YAML::Value << pose.orientation.z;
+    emitter << YAML::Key << "ow" << YAML::Value << pose.orientation.w;
+    emitter << YAML::EndMap;
+  };
+
   // set waypoints
   emitter << YAML::Key << "waypoints";
   emitter << YAML::Value << YAML::BeginSeq;
+
   for(const auto &e : wps_ptr_->getWaypointsInterpolated())
-  {
-    emitter << YAML::BeginMap;
-    emitter << YAML::Key << "px" << YAML::Value << e.position.x;
-    emitter << YAML::Key << "py" << YAML::Value << e.position.y;
-    emitter << YAML::Key << "pz" << YAML::Value << e.position.z;
-    emitter << YAML::Key << "ox" << YAML::Value << e.orientation.x;
-    emitter << YAML::Key << "oy" << YAML::Value << e.orientation.y;
-    emitter << YAML::Key << "oz" << YAML::Value << e.orientation.z;
-    emitter << YAML::Key << "ow" << YAML::Value << e.orientation.w;
-    emitter << YAML::EndMap;
-  }
+    wps2yaml(e);
   emitter << YAML::EndSeq;
 
   // set waypoints raw
   emitter << YAML::Key << "waypoints_raw";
   emitter << YAML::Value << YAML::BeginSeq;
+
   for(const auto &e : wps_ptr_->getWaypointsRaw())
-  {
-    emitter << YAML::BeginMap;
-    emitter << YAML::Key << "px" << YAML::Value << e.position.x;
-    emitter << YAML::Key << "py" << YAML::Value << e.position.y;
-    emitter << YAML::Key << "pz" << YAML::Value << e.position.z;
-    emitter << YAML::Key << "ox" << YAML::Value << e.orientation.x;
-    emitter << YAML::Key << "oy" << YAML::Value << e.orientation.y;
-    emitter << YAML::Key << "oz" << YAML::Value << e.orientation.z;
-    emitter << YAML::Key << "ow" << YAML::Value << e.orientation.w;
-    emitter << YAML::EndMap;
-  }
+    wps2yaml(e);
   emitter << YAML::EndSeq;
 
   emitter << YAML::EndMap;
@@ -244,21 +238,26 @@ void MotionCreator::check(int state)
   }
   else if(state == Qt::Checked)
   {
-    auto result = QMessageBox::question(this, "Subsribe /points_map", "get z from /points_map?\n already created waypoints is reinitialized.", QMessageBox::Yes | QMessageBox::No);
+    auto result = QMessageBox::question(this, "Subscribe /points_map", "get z from /points_map?\n already created waypoints is reinitialized.", QMessageBox::Yes | QMessageBox::No);
     if (result == QMessageBox::Yes)
     {
       wps_ptr_->reset();
-    }
-    check_z_label_->setText(": Initializing...");
-    QApplication::processEvents();
-    pm_ptr_.reset(new PointsMap());
-    if(pm_ptr_->isSubscribed())
-    {
-      check_z_label_->setText(": Initialized");
+
+      check_z_label_->setText(": Initializing...");
+      QApplication::processEvents();
+      pm_ptr_.reset(new PointsMap());
+      if(pm_ptr_->isSubscribed())
+      {
+        check_z_label_->setText(": Initialized");
+      }
+      else
+      {
+        check_z_label_->setText(": Initialize Failed");
+        check_z_->setCheckState(Qt::Unchecked);
+      }
     }
     else
     {
-      check_z_label_->setText(": Initialize Failed");
       check_z_->setCheckState(Qt::Unchecked);
     }
   }
@@ -453,8 +452,9 @@ void MotionCreator::createLayout()
   auto obj_info_layout = new QVBoxLayout();
   obj_info_layout->addLayout(param_layout);
   obj_info_layout->addLayout(check_z_layout);
+  obj_info_layout->addWidget(reverse_);
 
-  obj_info_group_ = new QGroupBox(tr("Obstacle Information"));
+  obj_info_group_ = new QGroupBox(tr("Waypoint Information"));
   obj_info_group_->setLayout(obj_info_layout);
   obj_info_group_->setEnabled(false);
 
