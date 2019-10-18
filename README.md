@@ -2,6 +2,9 @@
 
 ## 機能
 - event_captureを使用しwaypointを追加、移動、削除。その後、yamlで保存
+  - 左クリック：waypoint追加
+  - 右クリック：waypoint削除
+  - Shift+左ドラッグ&ドロップ：waypoint移動
 - 速度は一意に設定（後々waypointごとに変更出来るようにしたい
 - 点群地図（/points_map）を読み込んでz座標の補正に対応
 
