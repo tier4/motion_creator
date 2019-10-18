@@ -31,7 +31,7 @@ namespace rviz_plugins
 class Waypoints
 {
 public:
-  explicit Waypoints(const std::string &node_name) : selected_(wps_raw_.end()), NS_RAW("raw"), NS_INTERPOLATED("spline")
+  explicit Waypoints(const std::string &node_name) : selected_(wps_raw_.end()), NS_RAW("raw"), NS_INTERPOLATED("spline"), is_reverse_(false)
   {
     pub_ = nh_.advertise<visualization_msgs::MarkerArray>(node_name + "/marker", 1);
   };
@@ -41,6 +41,7 @@ public:
   void move(const geometry_msgs::PointStamped &ps);
   void select(const geometry_msgs::PointStamped &ps);
   void release();
+  void reverse();
   void setTargetFrame(const std::string tf) { target_frame_ = tf; }
   std::vector<geometry_msgs::Pose> getWaypointsRaw() { return wps_raw_; }
   std::vector<geometry_msgs::Pose> getWaypointsInterpolated() { return wps_intp_; }
@@ -49,6 +50,7 @@ public:
   void publishMarker();
   void publishDeleteMarker();
   uint32_t getSize(){ return wps_raw_.size(); }
+  void setIsReverse(bool is_rev){ is_reverse_ = is_rev; }
   
 private:
   ros::NodeHandle nh_;
@@ -59,7 +61,10 @@ private:
   std::vector<geometry_msgs::Pose>::iterator selected_;
   const std::string NS_RAW;
   const std::string NS_INTERPOLATED;
+  bool is_reverse_;
 
   void angleInterpolation();
+  void angleInterpolationReverse();
+  void optimize();
 };
 }

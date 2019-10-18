@@ -86,7 +86,7 @@ void MotionCreator::edit(bool checked)
 
 void MotionCreator::load()
 {
-  QString filepath = QFileDialog::getOpenFileName(this, "Load Fake Obstacle Settings", QDir::homePath(), tr("YAML (*.yaml)"));
+  QString filepath = QFileDialog::getOpenFileName(this, "Load", QDir::homePath(), tr("YAML (*.yaml)"));
 
   if (filepath.isEmpty())
     return;
@@ -149,7 +149,7 @@ void MotionCreator::load()
 
 void MotionCreator::reset()
 {
-  auto result = QMessageBox::question(this, "Reset", "Reset obstacle information?", QMessageBox::Yes | QMessageBox::No);
+  auto result = QMessageBox::question(this, "Reset", "Reset ?", QMessageBox::Yes | QMessageBox::No);
   if (result == QMessageBox::Yes)
   {
     target_frame_->setText("");
@@ -163,7 +163,7 @@ void MotionCreator::reset()
 
 void MotionCreator::save()
 {
-  QString filepath = QFileDialog::getSaveFileName(this, "Save Fake Obstacle Settings", save_dir_, tr("YAML (*.yaml)"));
+  QString filepath = QFileDialog::getSaveFileName(this, "Save", save_dir_, tr("YAML (*.yaml)"));
 
   if (filepath.isEmpty())
     return;
@@ -190,49 +190,56 @@ void MotionCreator::save()
   emitter << YAML::Value << velocity_->text().toUtf8().constData();
   emitter << YAML::Comment("(km/h)");
 
+  auto wps2yaml = [&emitter](const geometry_msgs::Pose &pose){
+    emitter << YAML::BeginMap;
+    emitter << YAML::Key << "px" << YAML::Value << pose.position.x;
+    emitter << YAML::Key << "py" << YAML::Value << pose.position.y;
+    emitter << YAML::Key << "pz" << YAML::Value << pose.position.z;
+    emitter << YAML::Key << "ox" << YAML::Value << pose.orientation.x;
+    emitter << YAML::Key << "oy" << YAML::Value << pose.orientation.y;
+    emitter << YAML::Key << "oz" << YAML::Value << pose.orientation.z;
+    emitter << YAML::Key << "ow" << YAML::Value << pose.orientation.w;
+    emitter << YAML::EndMap;
+  };
+
   // set waypoints
   emitter << YAML::Key << "waypoints";
   emitter << YAML::Value << YAML::BeginSeq;
+
   for(const auto &e : wps_ptr_->getWaypointsInterpolated())
-  {
-    emitter << YAML::BeginMap;
-    emitter << YAML::Key << "px" << YAML::Value << e.position.x;
-    emitter << YAML::Key << "py" << YAML::Value << e.position.y;
-    emitter << YAML::Key << "pz" << YAML::Value << e.position.z;
-    emitter << YAML::Key << "ox" << YAML::Value << e.orientation.x;
-    emitter << YAML::Key << "oy" << YAML::Value << e.orientation.y;
-    emitter << YAML::Key << "oz" << YAML::Value << e.orientation.z;
-    emitter << YAML::Key << "ow" << YAML::Value << e.orientation.w;
-    emitter << YAML::EndMap;
-  }
+    wps2yaml(e);
   emitter << YAML::EndSeq;
 
   // set waypoints raw
   emitter << YAML::Key << "waypoints_raw";
   emitter << YAML::Value << YAML::BeginSeq;
+
   for(const auto &e : wps_ptr_->getWaypointsRaw())
-  {
-    emitter << YAML::BeginMap;
-    emitter << YAML::Key << "px" << YAML::Value << e.position.x;
-    emitter << YAML::Key << "py" << YAML::Value << e.position.y;
-    emitter << YAML::Key << "pz" << YAML::Value << e.position.z;
-    emitter << YAML::Key << "ox" << YAML::Value << e.orientation.x;
-    emitter << YAML::Key << "oy" << YAML::Value << e.orientation.y;
-    emitter << YAML::Key << "oz" << YAML::Value << e.orientation.z;
-    emitter << YAML::Key << "ow" << YAML::Value << e.orientation.w;
-    emitter << YAML::EndMap;
-  }
+    wps2yaml(e);
   emitter << YAML::EndSeq;
 
   emitter << YAML::EndMap;
   //std::cout << emitter.c_str() << std::endl;
   ofs << emitter.c_str();
   ofs.close();
-  save_dir_ = QFileInfo(filepath).dir().path();
+
 
   //log_view_->insertPlainText(QString::fromStdString(std::string("saved:" + (std::string)filepath.toUtf8().constData() + "\n")));
   //log_view_->moveCursor(QTextCursor::End);
 
+  // save as csv
+  std::string filepath_csv = filepath.toUtf8().constData();
+  filepath_csv +=".csv";
+  std::ofstream ofs_csv(filepath_csv.c_str());
+  ofs_csv << "x,y,z,yaw,velocity,change_flag" << std::endl;
+
+  for(const auto &e : wps_ptr_->getWaypointsInterpolated())
+  {
+    ofs_csv << e.position.x << "," << e.position.y << "," << e.position.z << ","  << tf2::getYaw(e.orientation) << "," << velocity_->text().toUtf8().constData() << "," << 0 << std::endl;
+  }
+  ofs_csv.close();
+  
+  save_dir_ = QFileInfo(filepath).dir().path();
 }
 
 void MotionCreator::check(int state)
@@ -244,23 +251,42 @@ void MotionCreator::check(int state)
   }
   else if(state == Qt::Checked)
   {
-    auto result = QMessageBox::question(this, "Subsribe /points_map", "get z from /points_map?\n already created waypoints is reinitialized.", QMessageBox::Yes | QMessageBox::No);
+    auto result = QMessageBox::question(this, "Subscribe /points_map", "get z from /points_map?\n already created waypoints is reinitialized.", QMessageBox::Yes | QMessageBox::No);
     if (result == QMessageBox::Yes)
     {
       wps_ptr_->reset();
-    }
-    check_z_label_->setText(": Initializing...");
-    QApplication::processEvents();
-    pm_ptr_.reset(new PointsMap());
-    if(pm_ptr_->isSubscribed())
-    {
-      check_z_label_->setText(": Initialized");
+
+      check_z_label_->setText(": Initializing...");
+      QApplication::processEvents();
+      pm_ptr_.reset(new PointsMap());
+      if(pm_ptr_->isSubscribed())
+      {
+        check_z_label_->setText(": Initialized");
+      }
+      else
+      {
+        check_z_label_->setText(": Initialize Failed");
+        check_z_->setCheckState(Qt::Unchecked);
+      }
     }
     else
     {
-      check_z_label_->setText(": Initialize Failed");
       check_z_->setCheckState(Qt::Unchecked);
     }
+
+  }
+}
+
+void MotionCreator::check_reverse(int state)
+{
+  wps_ptr_->reverse();
+  if(state == Qt::Unchecked)
+  {
+    wps_ptr_->setIsReverse(false);
+  }
+  else if(state == Qt::Checked)
+  {
+    wps_ptr_->setIsReverse(true);
   }
 }
 
@@ -430,6 +456,9 @@ void MotionCreator::createLayout()
   check_z_layout->addWidget(check_z_);
   check_z_layout->addWidget(check_z_label_);
 
+  reverse_ = new QCheckBox("reverse route");
+  csv_ = new QCheckBox("output *.csv");
+
   // button layout
   edit_button_ = new QPushButton("EDIT");
   edit_button_->setCheckable(true);
@@ -443,6 +472,7 @@ void MotionCreator::createLayout()
   connect(reset_button_, &QPushButton::clicked, this, &MotionCreator::reset);
   connect(save_button_, &QPushButton::clicked, this, &MotionCreator::save);
   connect(check_z_, &QCheckBox::stateChanged, this, &MotionCreator::check);
+  connect(reverse_, &QCheckBox::stateChanged, this, &MotionCreator::check_reverse);
 
   auto button_layout = new QHBoxLayout();
   button_layout->addWidget(edit_button_);
@@ -453,8 +483,10 @@ void MotionCreator::createLayout()
   auto obj_info_layout = new QVBoxLayout();
   obj_info_layout->addLayout(param_layout);
   obj_info_layout->addLayout(check_z_layout);
+  obj_info_layout->addWidget(reverse_);
+  obj_info_layout->addWidget(csv_);
 
-  obj_info_group_ = new QGroupBox(tr("Obstacle Information"));
+  obj_info_group_ = new QGroupBox(tr("Waypoint Information"));
   obj_info_group_->setLayout(obj_info_layout);
   obj_info_group_->setEnabled(false);
 

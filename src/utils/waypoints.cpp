@@ -136,10 +136,7 @@ void Waypoints::add(const geometry_msgs::PointStamped& ps)
   pose.position = ps.point;
   wps_raw_.push_back(pose);
 
-  // angle interpolation
-  angleInterpolation();
-
-  wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+  optimize();
 
   /*for(const auto &e : wps_raw_)
   {
@@ -161,10 +158,9 @@ void Waypoints::erase(const geometry_msgs::PointStamped &ps)
     return planning_utils::calcDistance2D(pose.position, ps.point) < 1.0;
   });
   wps_raw_.erase(remove_itr, wps_raw_.end());
-  wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
 
-  // angle reinterpolation
-  angleInterpolation();
+  optimize();
+
 
   publishMarker();
   selected_ = wps_raw_.end();
@@ -186,8 +182,7 @@ void Waypoints::move(const geometry_msgs::PointStamped &ps)
   {
     publishDeleteMarker();
     selected_->position = ps.point;
-    angleInterpolation();
-    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+    optimize();
     publishMarker();
   }
   else
@@ -221,6 +216,12 @@ void Waypoints::load(const std::vector<geometry_msgs::Pose> &wps_intp, const std
   publishMarker();
 }
 
+void Waypoints::reverse()
+{
+  std::reverse(wps_raw_.begin(), wps_raw_.end());
+  std::reverse(wps_intp_.begin(), wps_intp_.end());
+}
+
 void Waypoints::angleInterpolation()
 {
   //ROS_INFO_STREAM(__FUNCTION__);
@@ -228,21 +229,15 @@ void Waypoints::angleInterpolation()
   {
     for (int32_t i = 0; i < (int32_t)wps_raw_.size(); i++)
     {
-      if(i != (int32_t)(wps_raw_.size() - 1))
-      {
-        auto &e = wps_raw_.at(i);
-        const auto &e_next = wps_raw_.at(i + 1);
-        const double x_diff = e_next.position.x - e.position.x;
-        const double y_diff = e_next.position.y - e.position.y;
-        double yaw = atan2(y_diff, x_diff);
-        tf2::Quaternion tf2_q;
-        tf2_q.setRPY(0.0, 0.0, yaw);
-        e.orientation = tf2::toMsg(tf2_q);
-      }
-      else
-      {
-        wps_raw_.back().orientation = wps_raw_.at(wps_raw_.size() - 2).orientation;
-      }
+      const auto &e = (i != (int32_t)(wps_raw_.size() - 1)) ? wps_raw_.at(i) : wps_raw_.at(i - 1);
+      const auto &e_next = (i != (int32_t)(wps_raw_.size() - 1)) ? wps_raw_.at(i + 1) : wps_raw_.at(i);
+
+      const double x_diff = e_next.position.x - e.position.x;
+      const double y_diff = e_next.position.y - e.position.y;
+      double yaw = atan2(y_diff, x_diff);
+      tf2::Quaternion tf2_q;
+      tf2_q.setRPY(0.0, 0.0, yaw);
+      wps_raw_.at(i).orientation = tf2::toMsg(tf2_q);
     }
   }
   else if(wps_raw_.size() == 1)
@@ -251,4 +246,48 @@ void Waypoints::angleInterpolation()
   }
 }
 
+void Waypoints::angleInterpolationReverse()
+{
+  //ROS_INFO_STREAM(__FUNCTION__);
+  if(wps_raw_.size() > 1)
+  {
+    for (int32_t i = (int32_t)wps_raw_.size() - 1; i >= 0 ; i--)
+    {
+      const auto &e = (i == 0) ? wps_raw_.at(i + 1) : wps_raw_.at(i);
+      const auto &e_next = (i == 0) ? wps_raw_.at(i) : wps_raw_.at(i - 1);
+
+      const double x_diff = e_next.position.x - e.position.x;
+      const double y_diff = e_next.position.y - e.position.y;
+      double yaw = atan2(y_diff, x_diff);
+      tf2::Quaternion tf2_q;
+      tf2_q.setRPY(0.0, 0.0, yaw);
+      wps_raw_.at(i).orientation = tf2::toMsg(tf2_q);
+    }
+  }
+  else if(wps_raw_.size() == 1)
+  {
+    wps_raw_.front().orientation = geometry_msgs::Quaternion();
+  }
 }
+
+void Waypoints::optimize()
+{
+  // angle interpolation
+  if(!is_reverse_)
+  {
+    angleInterpolation();
+    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+  }
+  else
+  {
+    angleInterpolationReverse();
+    std::reverse(wps_raw_.begin(), wps_raw_.end());
+    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+    reverse();
+  }
+}
+}
+
+
+
+
