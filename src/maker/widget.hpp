@@ -20,6 +20,7 @@
 #include <rviz/panel.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2/utils.h>
 #include <rviz/visualization_manager.h>
 
 #include <QLabel>
@@ -77,6 +78,7 @@ private:
   QLabel *check_z_label_;
 
   QCheckBox* reverse_;
+  QCheckBox* csv_;
 
   QGroupBox* obj_info_group_;
 

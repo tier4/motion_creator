@@ -222,11 +222,24 @@ void MotionCreator::save()
   //std::cout << emitter.c_str() << std::endl;
   ofs << emitter.c_str();
   ofs.close();
-  save_dir_ = QFileInfo(filepath).dir().path();
+
 
   //log_view_->insertPlainText(QString::fromStdString(std::string("saved:" + (std::string)filepath.toUtf8().constData() + "\n")));
   //log_view_->moveCursor(QTextCursor::End);
 
+  // save as csv
+  std::string filepath_csv = filepath.toUtf8().constData();
+  filepath_csv +=".csv";
+  std::ofstream ofs_csv(filepath_csv.c_str());
+  ofs_csv << "x,y,z,yaw,velocity,change_flag" << std::endl;
+
+  for(const auto &e : wps_ptr_->getWaypointsInterpolated())
+  {
+    ofs_csv << e.position.x << "," << e.position.y << "," << e.position.z << ","  << tf2::getYaw(e.orientation) << "," << velocity_->text().toUtf8().constData() << "," << 0 << std::endl;
+  }
+  ofs_csv.close();
+  
+  save_dir_ = QFileInfo(filepath).dir().path();
 }
 
 void MotionCreator::check(int state)
@@ -444,6 +457,7 @@ void MotionCreator::createLayout()
   check_z_layout->addWidget(check_z_label_);
 
   reverse_ = new QCheckBox("reverse route");
+  csv_ = new QCheckBox("output *.csv");
 
   // button layout
   edit_button_ = new QPushButton("EDIT");
@@ -470,6 +484,7 @@ void MotionCreator::createLayout()
   obj_info_layout->addLayout(param_layout);
   obj_info_layout->addLayout(check_z_layout);
   obj_info_layout->addWidget(reverse_);
+  obj_info_layout->addWidget(csv_);
 
   obj_info_group_ = new QGroupBox(tr("Waypoint Information"));
   obj_info_group_->setLayout(obj_info_layout);
