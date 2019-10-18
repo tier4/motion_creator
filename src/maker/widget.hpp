@@ -76,6 +76,8 @@ private:
   QCheckBox* check_z_;
   QLabel *check_z_label_;
 
+  QCheckBox* reverse_;
+
   QGroupBox* obj_info_group_;
 
   bool prev_left_button_;
@@ -92,6 +94,7 @@ private Q_SLOTS:
   void reset();
   void save();
   void check(int state);
+  void check_reverse(int state);
 
 
 };

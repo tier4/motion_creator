@@ -260,6 +260,20 @@ void MotionCreator::check(int state)
     {
       check_z_->setCheckState(Qt::Unchecked);
     }
+
+  }
+}
+
+void MotionCreator::check_reverse(int state)
+{
+  wps_ptr_->reverse();
+  if(state == Qt::Unchecked)
+  {
+    wps_ptr_->setIsReverse(false);
+  }
+  else if(state == Qt::Checked)
+  {
+    wps_ptr_->setIsReverse(true);
   }
 }
 
@@ -429,6 +443,8 @@ void MotionCreator::createLayout()
   check_z_layout->addWidget(check_z_);
   check_z_layout->addWidget(check_z_label_);
 
+  reverse_ = new QCheckBox("reverse route");
+
   // button layout
   edit_button_ = new QPushButton("EDIT");
   edit_button_->setCheckable(true);
@@ -442,6 +458,7 @@ void MotionCreator::createLayout()
   connect(reset_button_, &QPushButton::clicked, this, &MotionCreator::reset);
   connect(save_button_, &QPushButton::clicked, this, &MotionCreator::save);
   connect(check_z_, &QCheckBox::stateChanged, this, &MotionCreator::check);
+  connect(reverse_, &QCheckBox::stateChanged, this, &MotionCreator::check_reverse);
 
   auto button_layout = new QHBoxLayout();
   button_layout->addWidget(edit_button_);
