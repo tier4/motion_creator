@@ -1,5 +1,8 @@
 # motion creator
 
+## Dependencies
+- event_capture
+
 ## 機能
 - event_captureを使用しwaypointを追加、移動、削除。その後、yamlで保存
   - 左クリック：waypoint追加
