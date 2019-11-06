@@ -115,14 +115,14 @@ void Waypoints::publishMarker()
     for (int32_t i = 0; i < (int32_t)wps_raw_.size(); i++)
     {
       auto &e = wps_raw_.at(i);
-      ma.markers.push_back(ArrowADD(e, Color(0, 1.0, 0, 1.0), Scale(1.5, 0.3, 0.3), NS_RAW, i));
+      ma.markers.push_back(ArrowADD(e, Color(0, 1.0, 0, 0.5), Scale(1.0, 0.1, 0.1), NS_RAW, i));
       ma.markers.push_back(TextADD(e, NS_RAW + "_text", i, std::to_string(i)));
     }
 
     for (int32_t i = 0; i < (int32_t)wps_intp_.size(); i++)
     {
       auto &e = wps_intp_.at(i);
-      ma.markers.push_back(ArrowADD(e, Color(1.0, 0, 0, 1.0), Scale(1.0, 0.1, 0.1), NS_INTERPOLATED, i));
+      ma.markers.push_back(ArrowADD(e, Color(1.0, 0, 0, 0.5), Scale(1.0, 0.1, 0.1), NS_INTERPOLATED, i));
     }
 
     pub_.publish(ma);
@@ -272,20 +272,54 @@ void Waypoints::angleInterpolationReverse()
 
 void Waypoints::optimize()
 {
+  //ROS_INFO_STREAM(__FUNCTION__);
   // angle interpolation
   if(!is_reverse_)
   {
     angleInterpolation();
-    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
   }
   else
   {
     angleInterpolationReverse();
     std::reverse(wps_raw_.begin(), wps_raw_.end());
-    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
-    reverse();
   }
+
+  //ROS_INFO("mode: %d", intp_mode_);
+  if(intp_mode_ == InterpolationMode::linear)
+  {
+    wps_intp_ = planning_utils::linearInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+  }
+  else if(intp_mode_ == InterpolationMode::spline)
+  {
+    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+  }
+  else
+  {
+
+  }
+
+  if(is_reverse_)
+    reverse();
 }
+
+void Waypoints::setInterpolationMode(const std::string &str)
+{
+  if(str == "linear")
+  {
+    intp_mode_ = InterpolationMode::linear;
+  }
+  else if(str == "spline")
+  {
+    intp_mode_ = InterpolationMode::spline;
+  }
+  else
+  {
+    intp_mode_ = InterpolationMode::unknown;
+  }
+  //ROS_INFO("mode: %d", intp_mode_);
+
+  optimize();
+};
 }
 
 

@@ -346,6 +346,97 @@ std::vector<geometry_msgs::Pose> splineInterpolatePosesWithConstantDistance(
   return splineInterpolate(tmp, interval_length);
 }
 
+std::vector<geometry_msgs::Pose> linearInterpolatePosesWithConstantDistance(
+    const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length)
+{
+  auto LinearInterpolation =
+      [](const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length) {
+
+        if (in_poses.size() < 2)
+        {
+          ROS_WARN("[linearInterpolatePosesWithConstantDistance] input pose vector is empty. return empty poses.");
+          return in_poses;
+        }
+        std::vector<geometry_msgs::Pose> out_poses;
+
+        // convert vector<pose> to vector<double>
+        std::vector<double> in_pos_x_v, in_pos_y_v, in_pos_z_v, in_yaw_v;
+        for (auto &pose : in_poses)
+        {
+          in_pos_x_v.push_back(pose.position.x);
+          in_pos_y_v.push_back(pose.position.y);
+          in_pos_z_v.push_back(pose.position.z);
+          in_yaw_v.push_back(tf2::getYaw(pose.orientation));
+        }
+
+        // convert yaw vector monotonically increasing
+        for (unsigned int i = 1; i < in_yaw_v.size(); ++i)
+        {
+          const double diff = in_yaw_v[i] - in_yaw_v[i - 1];
+          in_yaw_v[i] = in_yaw_v[i - 1] + normalizeEulerAngle(diff);
+        }
+
+        // calculate input vector distance
+        std::vector<double> in_dist_v;
+        in_dist_v.push_back(0.0);
+        for (unsigned int i = 0; i < in_poses.size() - 1; ++i)
+        {
+          const double dx = in_poses.at(i + 1).position.x - in_poses.at(i).position.x;
+          const double dy = in_poses.at(i + 1).position.y - in_poses.at(i).position.y;
+          const double dz = in_poses.at(i + 1).position.z - in_poses.at(i).position.z;
+          in_dist_v.push_back(in_dist_v.at(i) + std::hypot(std::hypot(dx, dy), dz));
+        }
+
+        // calculate desired distance vector
+        std::vector<double> out_dist_v;
+        double interpolated_dist_sum = 0.0;
+        while (interpolated_dist_sum < in_dist_v.back())
+        {
+          out_dist_v.push_back(interpolated_dist_sum);
+          interpolated_dist_sum += interval_length;
+        }
+        out_dist_v.push_back(in_dist_v.back());
+
+        // apply spline interpolation
+        LinearInterpolate linear_interploate;
+        std::vector<double> out_pos_x_v, out_pos_y_v, out_pos_z_v, out_yaw_v;
+        if (!linear_interploate.interpolate(in_dist_v, in_pos_x_v, out_dist_v, out_pos_x_v) ||
+            !linear_interploate.interpolate(in_dist_v, in_pos_y_v, out_dist_v, out_pos_y_v) ||
+            !linear_interploate.interpolate(in_dist_v, in_pos_z_v, out_dist_v, out_pos_z_v))
+        {
+          ROS_ERROR("[linearInterpolatePosesWithConstantDistance] spline interpolation failed!!");
+          return out_poses;
+        }
+
+        for (int i = 0; i < (int)out_dist_v.size() - 1; ++i)
+        {
+          int i_next = std::min(i + 1, (int)out_dist_v.size() - 1);
+          const double eps = 1e-7;
+          const double dx = out_pos_x_v.at(i_next) - out_pos_x_v.at(i);
+          const double dy = out_pos_y_v.at(i_next) - out_pos_y_v.at(i);
+          const double den = std::fabs(dx) > eps ? dx : (dx > 0.0 ? eps : -eps);
+          const double yaw_tmp = std::atan2(dy, den);
+          out_yaw_v.push_back(yaw_tmp);
+        }
+        out_yaw_v.push_back(out_yaw_v.back());
+
+        for (unsigned int i = 0; i < out_dist_v.size(); ++i)
+        {
+          geometry_msgs::Pose p;
+          p.position.x = out_pos_x_v.at(i);
+          p.position.y = out_pos_y_v.at(i);
+          p.position.z = out_pos_z_v.at(i);
+          p.orientation = getQuaternionFromYaw(out_yaw_v.at(i));
+          out_poses.push_back(p);
+        }
+        return out_poses;
+      };
+
+  std::vector<geometry_msgs::Pose> tmp = LinearInterpolation(in_poses, interval_length);
+  return LinearInterpolation(tmp, interval_length);
+}
+
+
 geometry_msgs::Quaternion getQuaternionFromYaw(const double &_yaw)
 {
   tf2::Quaternion q;

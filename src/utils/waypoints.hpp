@@ -27,11 +27,16 @@
 
 namespace rviz_plugins
 {
-
+enum class InterpolationMode
+{
+  unknown,
+  linear,
+  spline,
+};
 class Waypoints
 {
 public:
-  explicit Waypoints(const std::string &node_name) : selected_(wps_raw_.end()), NS_RAW("raw"), NS_INTERPOLATED("spline"), is_reverse_(false)
+  explicit Waypoints(const std::string &node_name) : selected_(wps_raw_.end()), NS_RAW("raw"), NS_INTERPOLATED("spline"), is_reverse_(false), intp_mode_(InterpolationMode::linear)
   {
     pub_ = nh_.advertise<visualization_msgs::MarkerArray>(node_name + "/marker", 1);
   };
@@ -51,6 +56,7 @@ public:
   void publishDeleteMarker();
   uint32_t getSize(){ return wps_raw_.size(); }
   void setIsReverse(bool is_rev){ is_reverse_ = is_rev; }
+  void setInterpolationMode(const std::string &str);
   
 private:
   ros::NodeHandle nh_;
@@ -62,6 +68,7 @@ private:
   const std::string NS_RAW;
   const std::string NS_INTERPOLATED;
   bool is_reverse_;
+  InterpolationMode intp_mode_;
 
   void angleInterpolation();
   void angleInterpolationReverse();
