@@ -67,5 +67,6 @@ geometry_msgs::Point transformToRelativeCoordinate2D(const geometry_msgs::Point 
 geometry_msgs::Point transformToRelativeCoordinate3D(const geometry_msgs::Point &point,
                                                                       const geometry_msgs::Pose &current_pose); // TODO: test
 std::vector<geometry_msgs::Pose> splineInterpolatePosesWithConstantDistance(const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length);
+std::vector<geometry_msgs::Pose> linearInterpolatePosesWithConstantDistance(const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length);
 geometry_msgs::Quaternion getQuaternionFromYaw(const double &_yaw);
 }  // namespace planning_utils

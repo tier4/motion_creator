@@ -20,66 +20,76 @@
  * linear interpolation
  */
 
-bool LinearInterpolate::interpolate(const std::vector<double> &base_index, const std::vector<double> &base_value,
-                                    const std::vector<double> &return_index, std::vector<double> &return_value)
+bool LinearInterpolate::interpolate(const std::vector<double>& base_index, const std::vector<double>& base_value,
+                                    const std::vector<double>& return_index, std::vector<double>& return_value)
 {
-    auto isIncrease = [](const std::vector<double> &x) {
-        for (int i = 0; i < (int)x.size() - 1; ++i)
-        {
-            if (x[i] > x[i + 1])
-                return false;
-        }
-        return true;
-    };
-
-    if (base_index.size() == 0 || base_value.size() == 0 || return_index.size() == 0)
+  auto isIncrease = [](const std::vector<double>& x) {
+    for (int i = 0; i < (int)x.size() - 1; ++i)
     {
-      printf("[interpolate] some vector size is zero: base_index.size() = %lu, base_value.size() = %lu, "
-             "return_index.size() = %lu\n",
-             base_index.size(), base_value.size(), return_index.size());
-      return false;
-    }
-
-    // check if inputs are valid
-    if (!isIncrease(base_index) || !isIncrease(return_index) ||
-        return_index.front() < base_index.front() || base_index.back() < return_value.back() ||
-        base_index.size() != base_value.size())
-    {
-        std::cerr << "[isIncrease] bad index, return false" << std::endl;
+      if (x[i] > x[i + 1])
         return false;
     }
-
-    // calculate linear interpolation
-    int i = 0;
-    for (const auto idx : return_index)
-    {
-        if (base_index[i] == idx)
-        {
-            return_value.push_back(base_index[i]);
-            continue;
-        }
-        while (base_index[i] < idx)
-            ++i;
-        if (i <= 0 || (int)base_index.size() - 1 < i)
-        {
-            std::cerr << "? something wrong. skip this idx." << std::endl;
-            continue;
-        }
-
-        const double dist_base_idx = base_index[i] - base_index[i - 1];
-        const double dist_to_forward = base_index[i] - idx;
-        const double dist_to_backward = idx - base_index[i - 1];
-        if (dist_to_forward <= 0.0 || dist_to_backward <= 0.0)
-        {
-            std::cerr << "?? something wrong. skip this idx." << std::endl;
-            continue;
-        }
-
-        const double value = (dist_to_backward * base_index[i] + dist_to_forward * base_index[i - 1]) / dist_base_idx;
-        return_value.push_back(value);
-    }
     return true;
+  };
+
+  if (base_index.size() == 0 || base_value.size() == 0 || return_index.size() == 0)
+  {
+    printf("[interpolate] some vector size is zero: base_index.size() = %lu, base_value.size() = %lu, "
+           "return_index.size() = %lu\n",
+           base_index.size(), base_value.size(), return_index.size());
+    return false;
+  }
+
+  // check if inputs are valid
+  if (!isIncrease(base_index) || !isIncrease(return_index) || return_index.front() < base_index.front() ||
+      base_index.back() < return_index.back() || base_index.size() != base_value.size())
+  {
+    std::cerr << "[isIncrease] bad index, return false" << std::endl;
+    bool b1 = !isIncrease(base_index);
+    bool b2 = !isIncrease(return_index);
+    bool b3 = return_index.front() < base_index.front();
+    bool b4 = base_index.back() < return_index.back();
+    bool b5 = base_index.size() != base_value.size();
+    printf("%d, %d, %d, %d, %d\n", b1, b2, b3, b4, b5);
+    printf("%f, %f\n", base_index.front(), base_index.back());
+    printf("%f, %f\n", return_index.front(), return_index.back());
+    printf("%lu, %lu\n", base_index.size(), base_value.size());
+    return false;
+  }
+
+  // calculate linear interpolation
+  int i = 0;
+  for (const auto idx : return_index)
+  {
+    if (base_index[i] == idx)
+    {
+      return_value.push_back(base_value[i]);
+      continue;
+    }
+    while (base_index[i] < idx)
+      ++i;
+    if (i <= 0 || (int)base_index.size() - 1 < i)
+    {
+      std::cerr << "? something wrong. skip this idx." << std::endl;
+      continue;
+    }
+
+    const double dist_base_idx = base_index[i] - base_index[i - 1];
+    const double dist_to_forward = base_index[i] - idx;
+    const double dist_to_backward = idx - base_index[i - 1];
+    if (dist_to_forward < 0.0 || dist_to_backward < 0.0)
+    {
+      std::cerr << "?? something wrong. skip this idx." << std::endl;
+      continue;
+    }
+
+    const double value = (dist_to_backward * base_value[i] + dist_to_forward * base_value[i - 1]) / dist_base_idx;
+    return_value.push_back(value);
+  }
+
+  return true;
 }
+
 
 /*
  * spline interpolation 

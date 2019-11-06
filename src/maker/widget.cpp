@@ -290,6 +290,12 @@ void MotionCreator::check_reverse(int state)
   }
 }
 
+void MotionCreator::change_intp_mode(const QString qstr)
+{
+  ROS_INFO("mode: %s", qstr.toUtf8().constData());
+  wps_ptr_->setInterpolationMode(qstr.toUtf8().constData());
+}
+
 void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstPtr &msg)
 {
   //ROS_INFO_STREAM(__FUNCTION__);
@@ -450,6 +456,14 @@ void MotionCreator::createLayout()
   param_layout->addWidget(others_group, 0, 1);
 
   // checkbox
+  intp_mode_label_ = new QLabel("interpolation mode: ");
+  intp_mode_box_ = new QComboBox();
+  intp_mode_box_->addItem("linear");
+  intp_mode_box_->addItem("spline");
+  auto intp_mode_layout = new QHBoxLayout();
+  intp_mode_layout->addWidget(intp_mode_label_);
+  intp_mode_layout->addWidget(intp_mode_box_);
+
   check_z_label_ = new QLabel(tr(": Not Initialized"));
   check_z_ = new QCheckBox("get z from /points_map");
   auto check_z_layout = new QHBoxLayout();
@@ -473,6 +487,7 @@ void MotionCreator::createLayout()
   connect(save_button_, &QPushButton::clicked, this, &MotionCreator::save);
   connect(check_z_, &QCheckBox::stateChanged, this, &MotionCreator::check);
   connect(reverse_, &QCheckBox::stateChanged, this, &MotionCreator::check_reverse);
+  connect(intp_mode_box_, &QComboBox::currentTextChanged, this, &MotionCreator::change_intp_mode);
 
   auto button_layout = new QHBoxLayout();
   button_layout->addWidget(edit_button_);
@@ -482,6 +497,7 @@ void MotionCreator::createLayout()
 
   auto obj_info_layout = new QVBoxLayout();
   obj_info_layout->addLayout(param_layout);
+  obj_info_layout->addLayout(intp_mode_layout);
   obj_info_layout->addLayout(check_z_layout);
   obj_info_layout->addWidget(reverse_);
   obj_info_layout->addWidget(csv_);

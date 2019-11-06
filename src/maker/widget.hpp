@@ -30,6 +30,7 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QLabel>
+#include <QComboBox>
 
 #include <vector>
 #include <memory>
@@ -82,6 +83,9 @@ private:
 
   QGroupBox* obj_info_group_;
 
+  QComboBox* intp_mode_box_;
+  QLabel *intp_mode_label_;
+
   bool prev_left_button_;
   bool prev_right_button_;
 
@@ -97,6 +101,7 @@ private Q_SLOTS:
   void save();
   void check(int state);
   void check_reverse(int state);
+  void change_intp_mode(const QString qstr);
 
 
 };
