@@ -9,6 +9,7 @@
   - 右クリック：waypoint削除
   - Shift+左ドラッグ&ドロップ：waypoint移動
 - 速度は一意に設定（後々waypointごとに変更出来るようにしたい
+- 線形補間、およびスプライン補間に対応
 - 点群地図（/points_map）を読み込んでz座標の補正に対応
 
 ### Subscribe Topic
