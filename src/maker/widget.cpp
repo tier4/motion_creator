@@ -235,7 +235,7 @@ void MotionCreator::save()
 
   for(const auto &e : wps_ptr_->getWaypointsInterpolated())
   {
-    ofs_csv << e.position.x << "," << e.position.y << "," << e.position.z << ","  << tf2::getYaw(e.orientation) << "," << velocity_->text().toUtf8().constData() << "," << 0 << std::endl;
+    ofs_csv << std::to_string(e.position.x) << "," << std::to_string(e.position.y) << "," << std::to_string(e.position.z) << ","  << tf2::getYaw(e.orientation) << "," << velocity_->text().toUtf8().constData() << "," << 0 << std::endl;
   }
   ofs_csv.close();
   
