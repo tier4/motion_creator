@@ -64,7 +64,7 @@ void MotionCreator::update()
   }());
 
   save_button_->setEnabled([this](){
-    return !target_frame_->text().isEmpty() && !velocity_->text().isEmpty() && wps_ptr_->getSize() > 2
+    return !target_frame_->text().isEmpty() && !velocity_->text().isEmpty() && wps_ptr_->getSize() >= 2
         && !edit_button_->isChecked();
   }());
 }
@@ -357,7 +357,23 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
 
   if (!msg->capture.shift)
   {
-    if (!prev_left_button_ && msg->capture.left) // left down
+    if(msg->capture.ctrl){
+      if (!prev_right_button_ && msg->capture.right) // right down
+    {
+      auto ps_out_pair = transformPointStamped();
+      if(ps_out_pair.first)
+      {
+        ROS_INFO("erase: %lf, %lf, %lf", ps_out_pair.second.point.x, ps_out_pair.second.point.y, ps_out_pair.second.point.z);
+        wps_ptr_->erase(ps_out_pair.second);
+      }
+      //log_view_->insertPlainText(QString::fromStdString(
+      //    std::string("erase: " + std::to_string(ps_out.point.x) + ", " + std::to_string(ps_out.point.y) + "\n")
+      //));
+      //log_view_->moveCursor(QTextCursor::End);
+    }
+    }else
+    {
+      if (!prev_right_button_ && msg->capture.right) // right down
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -371,24 +387,13 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
        //   ));
       //log_view_->moveCursor(QTextCursor::End);
     }
-    else if (!prev_right_button_ && msg->capture.right) // right down
-    {
-      auto ps_out_pair = transformPointStamped();
-      if(ps_out_pair.first)
-      {
-        ROS_INFO("erase: %lf, %lf, %lf", ps_out_pair.second.point.x, ps_out_pair.second.point.y, ps_out_pair.second.point.z);
-        wps_ptr_->erase(ps_out_pair.second);
-      }
-      //log_view_->insertPlainText(QString::fromStdString(
-      //    std::string("erase: " + std::to_string(ps_out.point.x) + ", " + std::to_string(ps_out.point.y) + "\n")
-      //));
-      //log_view_->moveCursor(QTextCursor::End);
     }
+    
   }
   else
   {
     // move
-    if(!prev_left_button_ && msg->capture.left) // left down
+    if(!prev_right_button_ && msg->capture.right) // left down
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -401,7 +406,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
       //));
       //log_view_->moveCursor(QTextCursor::End);
     }
-    else if(prev_left_button_ && msg->capture.left) // left keep
+    else if(prev_right_button_ && msg->capture.right) // left keep
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -411,7 +416,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
       }
 
     }
-    else if(prev_left_button_ && !msg->capture.left) // left up
+    else if(prev_right_button_ && !msg->capture.right) // left up
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -421,6 +426,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
       }
     }
   }
+
   prev_left_button_ = msg->capture.left;
   prev_right_button_ = msg->capture.right;
 }
