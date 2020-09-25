@@ -19,6 +19,8 @@
 #include <cmath>
 #include <vector>
 
+namespace motion_creator
+{
 class LinearInterpolate
 {
 public:
@@ -46,4 +48,4 @@ public:
                    const std::vector<double> &return_index, std::vector<double> &return_value);
   void getValueVector(const std::vector<double> &s_v, std::vector<double> &value_v);
 };
-
+}

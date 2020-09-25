@@ -27,12 +27,12 @@
 #include <ros/ros.h>
 
 // User defined includes
-#include "interpolate.h"
+#include "./interpolate_exported.h"
 
 // C++ includes
 #include <memory>
 
-namespace planning_utils
+namespace planning_utils_exported
 {
 
 constexpr double ERROR = 1e-6;
@@ -69,4 +69,4 @@ geometry_msgs::Point transformToRelativeCoordinate3D(const geometry_msgs::Point 
 std::vector<geometry_msgs::Pose> splineInterpolatePosesWithConstantDistance(const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length);
 std::vector<geometry_msgs::Pose> linearInterpolatePosesWithConstantDistance(const std::vector<geometry_msgs::Pose> &in_poses, const double &interval_length);
 geometry_msgs::Quaternion getQuaternionFromYaw(const double &_yaw);
-}  // namespace planning_utils
+}  // namespace planning_utils_exported

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "planning_utils.h"
+#include "planning_utils_exported.h"
 
-namespace planning_utils
+namespace planning_utils_exported
 {
 
 double calcCurvature(const geometry_msgs::Point &target, const geometry_msgs::Pose &curr_pose)
@@ -308,7 +308,7 @@ std::vector<geometry_msgs::Pose> splineInterpolatePosesWithConstantDistance(
         out_dist_v.push_back(in_dist_v.back());
 
         // apply spline interpolation
-        SplineInterpolate spline_interploate;
+        motion_creator::SplineInterpolate spline_interploate;
         std::vector<double> out_pos_x_v, out_pos_y_v, out_pos_z_v, out_yaw_v;
         if (!spline_interploate.interpolate(in_dist_v, in_pos_x_v, out_dist_v, out_pos_x_v) ||
             !spline_interploate.interpolate(in_dist_v, in_pos_y_v, out_dist_v, out_pos_y_v) ||
@@ -398,7 +398,7 @@ std::vector<geometry_msgs::Pose> linearInterpolatePosesWithConstantDistance(
         out_dist_v.push_back(in_dist_v.back());
 
         // apply spline interpolation
-        LinearInterpolate linear_interploate;
+        motion_creator::LinearInterpolate linear_interploate;
         std::vector<double> out_pos_x_v, out_pos_y_v, out_pos_z_v, out_yaw_v;
         if (!linear_interploate.interpolate(in_dist_v, in_pos_x_v, out_dist_v, out_pos_x_v) ||
             !linear_interploate.interpolate(in_dist_v, in_pos_y_v, out_dist_v, out_pos_y_v) ||
@@ -444,4 +444,4 @@ geometry_msgs::Quaternion getQuaternionFromYaw(const double &_yaw)
   return tf2::toMsg(q);
 }
 
-}  // namespace planning_utils
+}  // namespace planning_utils_exported

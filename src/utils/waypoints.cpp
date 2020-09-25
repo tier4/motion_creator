@@ -19,7 +19,7 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include "../library/planning_utils.h"
+#include "../library/planning_utils_exported.h"
 
 namespace rviz_plugins
 {
@@ -155,7 +155,7 @@ void Waypoints::erase(const geometry_msgs::PointStamped &ps)
 
   auto remove_itr = std::remove_if(wps_raw_.begin(), wps_raw_.end(),
       [&ps](const geometry_msgs::Pose & pose){
-    return planning_utils::calcDistance2D(pose.position, ps.point) < 1.0;
+    return planning_utils_exported::calcDistance2D(pose.position, ps.point) < 1.0;
   });
   wps_raw_.erase(remove_itr, wps_raw_.end());
 
@@ -171,7 +171,7 @@ void Waypoints::select(const geometry_msgs::PointStamped &ps)
   //ROS_INFO_STREAM(__FUNCTION__);
   selected_ = std::find_if(wps_raw_.begin(), wps_raw_.end(),
       [&ps](const geometry_msgs::Pose & pose){
-    return planning_utils::calcDistance2D(pose.position, ps.point) < 1.0;
+    return planning_utils_exported::calcDistance2D(pose.position, ps.point) < 1.0;
   });
 }
 
@@ -287,11 +287,11 @@ void Waypoints::optimize()
   //ROS_INFO("mode: %d", intp_mode_);
   if(intp_mode_ == InterpolationMode::linear)
   {
-    wps_intp_ = planning_utils::linearInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+    wps_intp_ = planning_utils_exported::linearInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
   }
   else if(intp_mode_ == InterpolationMode::spline)
   {
-    wps_intp_ = planning_utils::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
+    wps_intp_ = planning_utils_exported::splineInterpolatePosesWithConstantDistance(wps_raw_, 1.0);
   }
   else
   {
@@ -321,7 +321,3 @@ void Waypoints::setInterpolationMode(const std::string &str)
   optimize();
 };
 }
-
-
-
-
