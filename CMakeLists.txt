@@ -34,8 +34,8 @@ set(QT_SOURCE_FILES
         src/utils/waypoints.cpp
         src/utils/points_map.cpp
         src/utils/read_yaml.cpp
-        src/library/interpolate.cpp
-        src/library/planning_utils.cpp
+        src/library/interpolate_exported.cpp
+        src/library/planning_utils_exported.cpp
 )
 
 add_library(${PROJECT_NAME}

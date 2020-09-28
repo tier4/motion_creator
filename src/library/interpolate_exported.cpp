@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "interpolate.h"
+#include "interpolate_exported.h"
 
 /* 
  * linear interpolation
  */
-
+namespace motion_creator
+{
 bool LinearInterpolate::interpolate(const std::vector<double>& base_index, const std::vector<double>& base_value,
                                     const std::vector<double>& return_index, std::vector<double>& return_value)
 {
@@ -242,4 +243,5 @@ bool SplineInterpolate::interpolate(const std::vector<double> &base_index, const
         return_value.push_back(getValue(normalized_idx[i]));
     }
     return true;
+}
 }
