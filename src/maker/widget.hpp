@@ -37,7 +37,7 @@
 
 #include "../utils/waypoints.hpp"
 #include "../utils/points_map.hpp"
-#include "event_capture/MouseEventCaptureStamped.h"
+#include "event_capture/EventCaptureStamped.h"
 
 namespace rviz_plugins
 {
@@ -89,7 +89,7 @@ private:
   bool prev_left_button_;
   bool prev_right_button_;
 
-  void callback(const event_capture::MouseEventCaptureStampedConstPtr &msg);
+  void callback(const event_capture::EventCaptureStampedConstPtr &msg);
   void createLayout();
 
 private Q_SLOTS:

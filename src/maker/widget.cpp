@@ -39,7 +39,7 @@ MotionCreator::MotionCreator(QWidget* parent)
     , prev_left_button_(false)
     , prev_right_button_(false)
 {
-  ec_sub_ = nh_.subscribe("/rviz/event_capture/mouse", 1, &rviz_plugins::MotionCreator::callback, this);
+  ec_sub_ = nh_.subscribe("/rviz/event_capture", 1, &rviz_plugins::MotionCreator::callback, this);
 
   save_dir_ = QDir::homePath();
 
@@ -296,7 +296,7 @@ void MotionCreator::change_intp_mode(const QString qstr)
   wps_ptr_->setInterpolationMode(qstr.toUtf8().constData());
 }
 
-void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstPtr &msg)
+void MotionCreator::callback(const event_capture::EventCaptureStampedConstPtr &msg)
 {
   //ROS_INFO_STREAM(__FUNCTION__);
   if(!edit_button_->isChecked())
@@ -305,8 +305,8 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
   auto ps_in = [msg]() {
     geometry_msgs::PointStamped ps;
     ps.header = msg->header;
-    ps.point.x = msg->capture.ray.origin.x;
-    ps.point.y = msg->capture.ray.origin.y;
+    ps.point.x = msg->mouse.ray.origin.x;
+    ps.point.y = msg->mouse.ray.origin.y;
     return ps;
   }();
 
@@ -355,10 +355,10 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
   //ROS_INFO("right: %s", msg->capture.right ? "True" : "False");
 
 
-  if (!msg->capture.shift)
+  if (!msg->mouse.shift)
   {
-    if(msg->capture.ctrl){
-      if (!prev_right_button_ && msg->capture.right) // right down
+    if(msg->mouse.ctrl){
+      if (!prev_right_button_ && msg->mouse.right) // right down
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -373,7 +373,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
     }
     }else
     {
-      if (!prev_right_button_ && msg->capture.right) // right down
+      if (!prev_right_button_ && msg->mouse.right) // right down
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -393,7 +393,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
   else
   {
     // move
-    if(!prev_right_button_ && msg->capture.right) // left down
+    if(!prev_right_button_ && msg->mouse.right) // left down
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -406,7 +406,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
       //));
       //log_view_->moveCursor(QTextCursor::End);
     }
-    else if(prev_right_button_ && msg->capture.right) // left keep
+    else if(prev_right_button_ && msg->mouse.right) // left keep
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -416,7 +416,7 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
       }
 
     }
-    else if(prev_right_button_ && !msg->capture.right) // left up
+    else if(prev_right_button_ && !msg->mouse.right) // left up
     {
       auto ps_out_pair = transformPointStamped();
       if(ps_out_pair.first)
@@ -427,8 +427,8 @@ void MotionCreator::callback(const event_capture::MouseEventCaptureStampedConstP
     }
   }
 
-  prev_left_button_ = msg->capture.left;
-  prev_right_button_ = msg->capture.right;
+  prev_left_button_ = msg->mouse.left;
+  prev_right_button_ = msg->mouse.right;
 }
 
 
