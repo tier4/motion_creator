@@ -13,7 +13,7 @@
 - 点群地図（/points_map）を読み込んでz座標の補正に対応
 
 ### Subscribe Topic
-/rviz/event_capture/mouse (event_capture/MouseEventCaptureStamped)
+/rviz/event_capture (event_capture/EventCaptureStamped)
 
 ### Publish Topic
 - /motion_creator/marker (visualization_msgs/MarkerArray)：作成したwaypoint
